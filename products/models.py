@@ -4,6 +4,7 @@ from PIL import Image
 from django.core.files import File
 from django.db import models
 from django.utils.text import slugify
+from django.utils.crypto import get_random_string
 
 
 class Category(models.Model):
@@ -75,6 +76,13 @@ class Item(models.Model):
         super(Item, self).save(*args, **kwargs)
 
 
+CODE_LENGTH = 7
+
+
+def generate_id_length():
+    return get_random_string(CODE_LENGTH).upper()
+
+
 class Product(models.Model):
     category = models.ForeignKey(
         Category, related_name='productcategory', on_delete=models.CASCADE)
@@ -86,10 +94,14 @@ class Product(models.Model):
     slug = models.SlugField(null=True, blank=True, max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=6, decimal_places=2)
-    price_before_discount = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True)
+    price_before_discount = models.DecimalField(
+        max_digits=6, decimal_places=2, blank=True, null=True)
     image = models.ImageField(upload_to='uploads/', blank=True, null=True)
     thumbnail = models.ImageField(upload_to='uploads/', blank=True, null=True)
     date_added = models.DateTimeField(auto_now_add=True)
+    in_stock = models.BooleanField(default=True)
+    code = models.CharField(max_length=CODE_LENGTH,
+                            editable=False, default="", unique=True)
 
     class Meta:
         ordering = ('-date_added',)
@@ -105,6 +117,10 @@ class Product(models.Model):
             self.slug = slugify(self.name)
         elif self.slug != slugify(self.name):
             self.slug = slugify(self.name)
+        super(Product, self).save(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        self.code = generate_id_length()
         super(Product, self).save(*args, **kwargs)
 
     @property
@@ -137,3 +153,23 @@ class Product(models.Model):
         thumbnail = File(thumb_io, name=image.name)
 
         return thumbnail
+
+
+class ProductImage(models.Model):
+    product = models.ForeignKey(
+        Product, related_name='imageproduct', on_delete=models.CASCADE)
+    date_added = models.DateTimeField(auto_now_add=True)
+    image = models.ImageField(
+        upload_to='uploads/productsImages/', blank=True, null=True)
+
+    class Meta:
+        ordering = ('-date_added',)
+
+    def __str__(self):
+        return self.product.name
+
+    @property
+    def get_image(self):
+        if self.image:
+            return 'http://127.0.0.1:8000' + self.image.url
+        return ''

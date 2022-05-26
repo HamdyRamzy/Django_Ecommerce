@@ -25,7 +25,6 @@ class LatestProductsList(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-
 class ProductDetail(APIView):
     def get(self, request, product_slug, format=None):
         product = get_object_or_404(Product, slug=product_slug)
@@ -52,27 +51,28 @@ class SectionProducts(APIView):
 
         return paginator.get_paginated_response(serializer.data)
 
+
 class ItemProducts(APIView):
     def get(self, request, category_slug, section_slug, item_slug, format=None):
         products = Product.objects.filter(
             category__slug=category_slug, section__slug=section_slug, item__slug=item_slug)
-        
+
         paginator = PageNumberPagination()
         paginator.page_size = 6
         results = paginator.paginate_queryset(products, request)
 
         serializer = ProductSerializer(results, many=True)
 
-        return paginator.get_paginated_response(serializer.data)    
+        return paginator.get_paginated_response(serializer.data)
 
 
 @api_view(['POST'])
 def search(request):
     query = request.data.get('query', '')
     if query:
-        products = Product.objects.filter(Q(name__icontains=query) | Q(description__icontains=query))
+        products = Product.objects.filter(Q(name__icontains=query) | Q(description__icontains=query) | Q(category__name__icontains=query) | Q(section__name__icontains=query) | Q(item__name__icontains=query))
         paginator = PageNumberPagination()
-        paginator.page_size = 3
+        paginator.page_size = 6
         results = paginator.paginate_queryset(products, request)
 
         serializer = ProductSerializer(results, many=True)
@@ -80,3 +80,4 @@ def search(request):
         return paginator.get_paginated_response(serializer.data)
     else:
         return Response({"products": []})
+
