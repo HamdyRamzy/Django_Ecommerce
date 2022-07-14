@@ -44,8 +44,9 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'djoser',
     'corsheaders',
-    
+    'coupon',
     'products',
+    'orders',
 ]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
@@ -95,14 +96,13 @@ WSGI_APPLICATION = 'ecommerce.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'ecommerce',
+        'NAME': 'dj-ecommerce',
         'USER': 'postgres',
         'PASSWORD': '123123',
         'HOST': 'localhost',
         'PORT': '5000',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators

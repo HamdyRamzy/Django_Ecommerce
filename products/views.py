@@ -7,8 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
-from .models import Product, Category, Section, Item
-from .serializers import CategorySerializer, ProductSerializer, SectionSerializer
+from .models import Product, Category, Section, Item, Review
+from .serializers import CategorySerializer, ProductSerializer, SectionSerializer, ReviewSerializer
 from rest_framework.pagination import PageNumberPagination
 
 
@@ -31,6 +31,14 @@ class ProductDetail(APIView):
         serializer = ProductSerializer(product)
         return Response(serializer.data)
 
+class ProductReviews(APIView):
+    def get(self, request, product_slug, format=None):
+        reviews = Review.objects.filter(slug=product_slug)
+        paginator = PageNumberPagination()
+        paginator.page_size = 3
+        results = paginator.paginate_queryset(reviews, request)
+        serializer = ReviewSerializer(results, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 class Categories(APIView):
     def get(self, request, format=None):

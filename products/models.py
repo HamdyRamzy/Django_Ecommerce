@@ -1,11 +1,10 @@
 from io import BytesIO
 from PIL import Image
-
+from django.contrib.auth.models import User
 from django.core.files import File
 from django.db import models
 from django.utils.text import slugify
 from django.utils.crypto import get_random_string
-
 
 class Category(models.Model):
     name = models.CharField(max_length=255)
@@ -63,7 +62,7 @@ class Item(models.Model):
         ordering = ('name',)
 
     def __str__(self):
-        return f'{self.name} | {self.section.name}'
+        return f'{self.name} | {self.section.name} | {self.category.name}'
 
     def get_absolute_url(self):
         return f'/{self.category.slug}/{self.section.slug}/{self.slug}/'
@@ -102,7 +101,7 @@ class Product(models.Model):
     in_stock = models.BooleanField(default=True)
     code = models.CharField(max_length=CODE_LENGTH,
                             editable=False, default="", unique=True)
-
+    rating = models.DecimalField(blank=True, null=True, max_digits=5, decimal_places=2)
     class Meta:
         ordering = ('-date_added',)
 
@@ -113,15 +112,13 @@ class Product(models.Model):
         return f'/{self.slug}/'
 
     def save(self, *args, **kwargs):
+        self.code = generate_id_length()
         if not self.slug:
             self.slug = slugify(self.name)
         elif self.slug != slugify(self.name):
             self.slug = slugify(self.name)
         super(Product, self).save(*args, **kwargs)
 
-    def save(self, *args, **kwargs):
-        self.code = generate_id_length()
-        super(Product, self).save(*args, **kwargs)
 
     @property
     def get_image(self):
@@ -173,3 +170,27 @@ class ProductImage(models.Model):
         if self.image:
             return 'http://127.0.0.1:8000' + self.image.url
         return ''
+
+
+
+
+class Review(models.Model):
+    user = models.ForeignKey(User, related_name='user_reviews', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, related_name='product_reviews', on_delete=models.CASCADE)
+    comment = models.TextField(blank=True, null=True)
+    rating = models.DecimalField(blank=True, null=True, max_digits=5, decimal_places=2)
+    date_added = models.DateTimeField(auto_now_add=True)
+    slug = models.SlugField(null=True, blank=True, max_length=255)
+
+    class Meta:
+        ordering = ('date_added',)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self.product.slug
+        elif self.slug != self.product.slug:
+            self.slug = self.product.slug
+        super(Review, self).save(*args, **kwargs)    
+
+    def __str__(self):
+        return f'{self.product.name} | {self.rating}'

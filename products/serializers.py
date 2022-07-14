@@ -1,6 +1,15 @@
 from rest_framework import serializers
+from django.contrib.auth.models import User
+from .models import Category, Section, Item, Product, ProductImage, Review
 
-from .models import Category, Section, Item, Product, ProductImage
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "username",
+        )
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -25,6 +34,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "imageproduct",
             "id",
             "code",
+            "rating",
             "name",
             "get_absolute_url",
             "description",
@@ -35,6 +45,19 @@ class ProductSerializer(serializers.ModelSerializer):
             "in_stock"
         )
         depth = 1
+
+class ReviewSerializer(serializers.ModelSerializer):
+    user = UserSerializer(many=False)
+
+    class Meta:
+        model = Review
+        fields = (
+            "user",
+            "product",
+            "comment",
+            "date_added",
+            "rating"
+        )
 
 
 class ItemSerializer(serializers.ModelSerializer):
